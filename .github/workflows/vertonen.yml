@@ -1,0 +1,41 @@
+name: Vertonen
+on:
+  workflow_dispatch:
+    inputs:
+      datei:
+        description: "Kapitel-Textdatei"
+        default: "kapitel/01_einleitung.txt"
+      modell:
+        description: "ElevenLabs-Modell"
+        default: "eleven_multilingual_v2"
+      tempo:
+        description: "Tempo (0.7 bis 1.2)"
+        default: "1.0"
+      stabilitaet:
+        description: "Stabilitaet (0 bis 1, niedriger = lebendiger)"
+        default: "0.5"
+permissions:
+  contents: write
+jobs:
+  vertonen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Vertonen
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ vars.ELEVENLABS_VOICE_ID }}
+          MODELL: ${{ inputs.modell }}
+          TEMPO: ${{ inputs.tempo }}
+          STABILITAET: ${{ inputs.stabilitaet }}
+          DATEI: ${{ inputs.datei }}
+        run: python3 vertonen.py "$DATEI"
+      - name: Ablegen
+        env:
+          DATEI: ${{ inputs.datei }}
+        run: |
+          git config user.name "hoerbuch-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add audio index.html
+          git commit -m "Hoerbuch: $DATEI" || echo "nichts zu committen"
+          git push
